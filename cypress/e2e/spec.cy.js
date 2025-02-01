@@ -17,9 +17,15 @@ describe('template spec', () => {
     // console.log(file);
     
   })
+  Cypress.on('uncaught:exception', (err, runnable) => {
+    if (err.message.includes("ppms.get is not a function")) {
+      return false; // Prevent Cypress from failing the test
+    }
+  });
   it('user should log in', () => {
     cy.viewport(1920, 1080)
     cy.visit('https://arbetsformedlingen.se/', {timeout: 5000} )
+    cy.wait(1000)
     cy.get('button').contains("Jag godkänner alla kakor").click()
 
     cy.get('div').contains("Logga in").should('be.visible').click()
@@ -77,7 +83,7 @@ describe('template spec', () => {
         date = `0${date}`
       }
       
-      cy.get("#soktjobb-aktivitetsdatum").type(`${x.getFullYear()}-${x.getMonth()+1}-${date}`)
+      cy.get("#soktjobb-aktivitetsdatum").type(`${x.getFullYear()}-${parseInt(x.getMonth() + 1) < 10 ? `0${x.getMonth() + 1}` : x.getMonth() + 1}-${date}`)
       cy.wait(10000)
 
       cy.get('button').contains("Spara").click()
