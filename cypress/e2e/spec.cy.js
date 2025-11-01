@@ -19,12 +19,18 @@ describe('template spec', () => {
   })
   Cypress.on('uncaught:exception', (err, runnable) => {
     if (err.message.includes("ppms.get is not a function")) {
-      return false; // Prevent Cypress from failing the test
+      return false; // Prevents Cypress from failing the test
+    }
+    if (err.message.includes("Loading chunk 1479 failed")) {
+      return false; // Prevents Cypress from failing the test
+    }
+    if (err.message.includes("NetworkError when attempting to fetch resource")) {
+      return false; // Prevents Cypress from failing the test
     }
   });
   it('user should log in', () => {
     cy.viewport(1920, 1080)
-    cy.visit('https://arbetsformedlingen.se/', {timeout: 5000} )
+    cy.visit('https://arbetsformedlingen.se/', {timeout: 30000} )
     cy.wait(1000)
     cy.get('button').contains("Jag godkänner alla kakor").click()
 
@@ -48,7 +54,7 @@ describe('template spec', () => {
     cy.wait(2000)
 
     cy.get('a').contains("Rapportera dina aktiviteter").click()
-    cy.wait(2000)
+    cy.wait(5000)
 
     // cy.get("button").contains("Till Min aktivitetsrapport").click({ force: true })
     // cy.wait(3000)
@@ -57,12 +63,51 @@ describe('template spec', () => {
     cy.wait(3000)
       // cy.get('div').contains("Bank-id").should('be.visible').click()
       // cy.wait(2000)
-    aktiviteter.forEach((aktivitet) => {
-      cy.get('label').contains("Genom annons").click()
-      cy.get('#soktjobb-soktTjanst').type(aktivitet[0])
-      cy.get('#soktjobb-arbetsgivare').type(aktivitet[1])
+    let ranNums = []
+    while (ranNums.length < 12) {
+      let newNum = Math.floor(Math.random() * aktiviteter.length)
+      if (!ranNums.includes(newNum)) {
+        ranNums.push(newNum)
+      }
+    }
+
+    console.log(ranNums);
+    
+    ranNums.forEach((num) => {
+      cy.get('label').contains("Heltid").click()
+      cy.wait(1000)
+
+      cy.get('#soktjobb-soktTjanst-search')
+        .clear()
+        .type(aktiviteter[num][0], { delay: 100 })
+
+      cy.wait(1000) // wait for autocomplete logic to settle
+
+      cy.get('body').then(($body) => {
+        const items = $body.find('li.listItemYrke')
+        const button = $body.find('button:contains("Hittar inte yrkesrollen")')
+
+        if (items.length > 0) {
+          // Case 2: suggestions visible
+          cy.wrap(items.first()).click()
+        } else if (button.length > 0) {
+          // Case 1: no match, show fallback button
+          cy.wrap(button).click()
+          cy.wait(1000)
+        } else {
+          // Case 3: exact match, nothing to click — continue safely
+          cy.log('Exact match, no list or button found — continuing')
+        }
+      })
+
+      cy.wait(1000)
+
+
+      cy.get('#soktjobb-arbetsgivare').clear().type(aktiviteter[num][1], {delay: 100})
+      cy.wait(1000)
+
       
-      let ort = aktivitet[2].replace(/\s+/g, '').toLowerCase()
+      let ort = aktiviteter[num][2].replace(/\s+/g, '').toLowerCase()
       switch (ort) {
         case "abr":
             cy.get('label').contains("Utomlands").click()
@@ -72,19 +117,20 @@ describe('template spec', () => {
           break;
         default:
             cy.get('label').contains("Sverige").click()
-            cy.get('#soktjobb-ort').type(aktivitet[2])
+          cy.get('#soktjobb-ort').clear().type(aktiviteter[num][2], { delay: 100 })
           break;
       }
+      cy.wait(1000)
 
       let x = prevMonth(new Date);
       
-      let date = aktivitet[3].replace(/\s+/g, '')
+      let date = aktiviteter[num][3].replace(/\s+/g, '')
       if (parseInt(date) < 10) {
         date = `0${date}`
       }
       
       cy.get("#soktjobb-aktivitetsdatum").type(`${x.getFullYear()}-${parseInt(x.getMonth() + 1) < 10 ? `0${x.getMonth() + 1}` : x.getMonth() + 1}-${date}`)
-      cy.wait(10000)
+      cy.wait(7500)
 
       cy.get('button').contains("Spara").click()
 
