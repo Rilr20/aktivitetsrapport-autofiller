@@ -1,1 +1,4 @@
 node_modules/
+aktiviteter.csv
+archive/
+.venv/
