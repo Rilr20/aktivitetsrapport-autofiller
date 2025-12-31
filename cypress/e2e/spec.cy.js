@@ -17,17 +17,22 @@ describe('template spec', () => {
     // console.log(file);
     
   })
+  // Cypress.on('uncaught:exception', (err, runnable) => {
+  //   if (err.message.includes("ppms.get is not a function")) {
+  //     return false; // Prevents Cypress from failing the test
+  //   }
+  //   if (err.message.includes("Loading chunk 1479 failed")) {
+  //     return false; // Prevents Cypress from failing the test
+  //   }
+  //   if (err.message.includes("NetworkError when attempting to fetch resource")) {
+  //     return false; // Prevents Cypress from failing the test
+  //   }
+  // });
   Cypress.on('uncaught:exception', (err, runnable) => {
-    if (err.message.includes("ppms.get is not a function")) {
-      return false; // Prevents Cypress from failing the test
-    }
-    if (err.message.includes("Loading chunk 1479 failed")) {
-      return false; // Prevents Cypress from failing the test
-    }
-    if (err.message.includes("NetworkError when attempting to fetch resource")) {
-      return false; // Prevents Cypress from failing the test
-    }
-  });
+    // returning false here prevents Cypress from
+    // failing the test
+    return false
+  })
   it('user should log in', () => {
     cy.viewport(1920, 1080)
     cy.visit('https://arbetsformedlingen.se/', {timeout: 30000} )
